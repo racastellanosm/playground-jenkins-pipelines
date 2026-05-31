@@ -7,3 +7,4 @@ blueocean
 pipeline-stage-view
 nord-theme
 theme-manager
+htmlpublisher

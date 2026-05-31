@@ -1,0 +1,91 @@
+services:
+  jenkins-controller:
+    build:
+      context: ./controller
+      dockerfile: Dockerfile
+    container_name: jenkins-controller
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD:-admin}
+      - DOCKER_HUB_TOKEN=${DOCKER_HUB_TOKEN}
+      - DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME}
+    volumes:
+      - ./jcasc:/var/jenkins_home/casc_configs:ro
+      - ./dsl:/var/jenkins_home/dsl:ro
+      - ./pipelines:/var/jenkins_home/pipelines:ro
+      - ./secrets:/var/jenkins_home/agent-secrets:ro
+    restart: unless-stopped
+
+  jenkins-agent-amd64:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+      platforms:
+        - linux/amd64
+    container_name: jenkins-agent-amd64
+    platform: linux/amd64
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=${JENKINS_AGENT_SSH_PUBKEY}
+      - DOCKER_HOST=tcp://docker-dind-amd64:2375
+    volumes:
+      - ./test-context:/home/jenkins/agent/test-context
+    depends_on:
+      jenkins-controller:
+        condition: service_started
+      docker-dind-amd64:
+        condition: service_healthy
+    restart: unless-stopped
+
+  jenkins-agent-arm64:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    container_name: jenkins-agent-arm64
+    environment:
+      - JENKINS_AGENT_SSH_PUBKEY=${JENKINS_AGENT_SSH_PUBKEY}
+      - DOCKER_HOST=tcp://docker-dind-arm64:2375
+    volumes:
+      - ./test-context:/home/jenkins/agent/test-context
+    depends_on:
+      jenkins-controller:
+        condition: service_started
+      docker-dind-arm64:
+        condition: service_healthy
+    restart: unless-stopped
+
+  docker-dind-amd64:
+    image: docker:29-dind@sha256:392437eb2d6e54f9ae2be9c0aac2cbca95e3f5eb9854b0f0b1d664d473856633
+    privileged: true
+    entrypoint: [ "dockerd-entrypoint.sh", "--iptables=true" ]
+    command: [ "--host=tcp://0.0.0.0:2375" ]
+    platform: linux/amd64
+    environment:
+      - DOCKER_TLS_CERTDIR=
+      - DOCKER_BUILDKIT=1
+    healthcheck:
+      test: [ "CMD", "docker", "info" ]
+      interval: 5s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+
+  docker-dind-arm64:
+    image: docker:29-dind@sha256:5256d1242c894ee092a567c4385fe682071c05c2056c1e90953717cec0aa3fbe
+    privileged: true
+    command: [ "--host=tcp://0.0.0.0:2375" ]
+    environment:
+      - DOCKER_TLS_CERTDIR=
+      - DOCKER_BUILDKIT=1
+    healthcheck:
+      test: [ "CMD", "docker", "info" ]
+      interval: 5s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped

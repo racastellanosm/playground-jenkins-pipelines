@@ -63,7 +63,7 @@ credentials:
               description: "SSH Key for Jenkins Agents"
           - usernamePassword:
               scope: GLOBAL
-              id: "rcastellanos-docker-hub-token"
+              id: "docker-hub-token"
               username: "${DOCKER_HUB_USERNAME}"
               password: "${DOCKER_HUB_TOKEN}"
               description: "Docker Hub Token for Jenkins Agents"

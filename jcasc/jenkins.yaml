@@ -1,0 +1,85 @@
+# Appearance configuration
+appearance:
+  prism:
+    theme: DARK
+  themeManager:
+    disableUserThemes: false
+    theme: "nord"
+
+# Jenkins configuration
+jenkins:
+  numExecutors: 1
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  nodes:
+    - permanent:
+        name: "agent-amd64"
+        remoteFS: "/home/jenkins/agent"
+        numExecutors: 2
+        labelString: "amd64 linux"
+        mode: NORMAL
+        launcher:
+          ssh:
+            host: "jenkins-agent-amd64"
+            port: 22
+            credentialsId: "jenkins-agent-key"
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+    - permanent:
+        name: "agent-arm64"
+        remoteFS: "/home/jenkins/agent"
+        numExecutors: 2
+        labelString: "arm64 linux"
+        mode: NORMAL
+        launcher:
+          ssh:
+            host: "jenkins-agent-arm64"
+            port: 22
+            credentialsId: "jenkins-agent-key"
+            sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: SYSTEM
+              id: "jenkins-agent-key"
+              username: "jenkins"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${readFile:/var/jenkins_home/agent-secrets/jenkins-agent-key}"
+              description: "SSH Key for Jenkins Agents"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "rcastellanos-docker-hub-token"
+              username: "${DOCKER_HUB_USERNAME}"
+              password: "${DOCKER_HUB_TOKEN}"
+              description: "Docker Hub Token for Jenkins Agents"
+
+jobs:
+  - script: >
+      freeStyleJob('seed-job') {
+        description('Seed Job to generate pipeline jobs programmatically')
+        label('built-in')
+        steps {
+          shell('mkdir -p dsl && cp /var/jenkins_home/dsl/seed.groovy dsl/seed.groovy')
+          dsl {
+            external('dsl/seed.groovy')
+            removeAction('DELETE')
+            removeViewAction('DELETE')
+            lookupStrategy('JENKINS_ROOT')
+          }
+        }
+      }

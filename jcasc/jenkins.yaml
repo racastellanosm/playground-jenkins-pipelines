@@ -67,6 +67,12 @@ credentials:
               username: "${DOCKER_HUB_USERNAME}"
               password: "${DOCKER_HUB_TOKEN}"
               description: "Docker Hub Token for Jenkins Agents"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-token"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub Personal Access Token for Jenkins Agents"
 
 jobs:
   - script: >

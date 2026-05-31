@@ -2,7 +2,7 @@ pipeline {
     agent { label 'arm64' } // default agent for all steps
     environment {
         // Docker registry credentials (set in Jenkins credentials or env vars)
-        DOCKER_REGISTRY_CREDENTIALS = credentials('rcastellanos-docker-hub-token')  // set this as a secret in Jenkins credentials
+        DOCKER_REGISTRY_CREDENTIALS = credentials('docker-hub-token')  // set this as a secret in Jenkins credentials
         IMAGE_NAME = "rcastellanosm/eqlabs-playground-php-slim-messenger"
     }
     stages {
@@ -12,31 +12,6 @@ pipeline {
                 // git url: 'https://github.com/example/example-repo.git', branch: 'main'
                 // Docker login – assumes credentials are stored as environment variables
                 dockerLogin(DOCKER_REGISTRY_CREDENTIALS_USR, DOCKER_REGISTRY_CREDENTIALS_PSW)
-            }
-        }
-        stage('Dependencies') {
-            steps {
-                // Build project dependencies – adjust command to your build system
-                sh 'echo building project dependencies'
-            }
-        }
-        stage('Test') {
-            parallel {
-                stage('Unit') {
-                    steps {
-                        sh 'echo running unit tests'
-                    }
-                }
-                stage('Integration') {
-                    steps {
-                        sh 'echo running integration tests'
-                    }
-                }
-                stage('Functional') {
-                    steps {
-                        sh 'echo running functional tests'
-                    }
-                }
             }
         }
         stage('Build & Push Images') {

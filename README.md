@@ -28,6 +28,12 @@ graph TD
         
         controller -- JNLP/Inbound --> agent_amd64
         controller -- JNLP/Inbound --> agent_arm64
+
+        dind_amd64[Docker-in-Docker AMD64]
+        dind_arm64[Docker-in-Docker ARM64]
+
+        agent_amd64 -- Docker --> dind_amd64
+        agent_arm64 -- Docker --> dind_arm64
     end
 
     host[Host Machine] -- Port 8080 --> controller

@@ -32,8 +32,6 @@ services:
     environment:
       - JENKINS_AGENT_SSH_PUBKEY=${JENKINS_AGENT_SSH_PUBKEY}
       - DOCKER_HOST=tcp://docker-dind-amd64:2375
-    volumes:
-      - ./test-context:/home/jenkins/agent/test-context
     depends_on:
       jenkins-controller:
         condition: service_started
@@ -51,8 +49,6 @@ services:
     environment:
       - JENKINS_AGENT_SSH_PUBKEY=${JENKINS_AGENT_SSH_PUBKEY}
       - DOCKER_HOST=tcp://docker-dind-arm64:2375
-    volumes:
-      - ./test-context:/home/jenkins/agent/test-context
     depends_on:
       jenkins-controller:
         condition: service_started
